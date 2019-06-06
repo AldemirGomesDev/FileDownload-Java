@@ -1,11 +1,18 @@
 package br.com.afti.filedownload;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.os.StrictMode;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,11 +21,15 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,9 +42,10 @@ public class MainActivity extends AppCompatActivity {
     ImageView my_image;
     // Progress dialog type (0 - for Horizontal progress bar)
     public static final int progress_bar_type = 0;
+    private final int PERMISSAO_REQUEST = 1;
 
     // File url to download
-    private static String file_url = "http://api.androidhive.info/progressdialog/hive.jpg";
+    private static String file_url = "https://api.androidhive.info/progressdialog/hive.jpg";
 
 
     @Override
@@ -53,10 +65,31 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // starting new Async Task
-//                new DownloadFileFromURL().execute(file_url);
-                startActivity(new Intent(MainActivity.this, DownloadActivity.class));
+                new DownloadFileFromURL().execute(file_url);
+//                startActivity(new Intent(MainActiv    ity.this, DownloadActivity.class));
+//                startActivity(new Intent(MainActivity.this, Main2Activity.class));
             }
         });
+
+        //USUARIA DAR A PERMISSAO PARA LER
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSAO_REQUEST);
+            }
+        }
+
+        //USUARIA DAR A PERMISSAO PARA ESCREVER
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSAO_REQUEST);
+            }
+        }
     }
 
     /**
@@ -100,46 +133,52 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... f_url) {
             int count;
+            StrictMode.ThreadPolicy vPolicy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(vPolicy);
+
+            InputStream inStream = null;
+            Bitmap pBitmap = null;
             try {
-                Log.w(TAG, "buscando imagem... ");
+                Log.w(TAG, "buscando imagem... " + f_url[0]);
+
                 URL url = new URL(f_url[0]);
-                URLConnection conection = url.openConnection();
-                conection.connect();
-                // getting file length
-                int lenghtOfFile = conection.getContentLength();
+                HttpsURLConnection pConnection = (HttpsURLConnection)url.openConnection();
+//                pConnection.setDoInput(true);
+//                pConnection.connect();
+                pConnection.setInstanceFollowRedirects(false);
+                inStream = pConnection.getInputStream();
+                    pBitmap = BitmapFactory.decodeStream(inStream);
 
-                // input stream to read file - with 8k buffer
-                InputStream input = new BufferedInputStream(url.openStream(), 8192);
-                Log.w(TAG, "inputStream: " + input.read() );
+                    Log.w(TAG, "HttpURLConnection ok " + pConnection.getResponseMessage());
+                if(pConnection.getResponseCode() == HttpURLConnection.HTTP_OK){
+                    Log.w(TAG, "HttpURLConnection ok ");
 
-                // Output stream to write file
-                OutputStream output = new FileOutputStream("/sdcard/downloadedfile.jpg");
+//                    inStream.close();
 
-                byte data[] = new byte[1024];
-
-                long total = 0;
-
-                while ((count = input.read(data)) != -1) {
-                    total += count;
-                    // publishing the progress....
-                    // After this onProgressUpdate will be called
-                    publishProgress(""+(int)((total*100)/lenghtOfFile));
-
-                    // writing data to file
-                    output.write(data, 0, count);
-                    Log.w(TAG, "doInBackground: " + output.toString() );
                 }
+
+                getDirFromSDCard();
+
+                File folder = new File(Environment.getExternalStorageDirectory().getAbsoluteFile() + "/TollCulator");
+                if (!folder.exists()) {
+                    folder.mkdir();
+                    Log.w(TAG, "pasta criada ");
+                }
+
+                File file = new File(Environment.getExternalStorageDirectory() + "/imgsApp");
+                file.mkdir();
+                File ifile= new File(Environment.getExternalStorageDirectory() + "/imgsApp/", "imagem1.jpg");
+
+                FileOutputStream output = new FileOutputStream(ifile);
+                pBitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
 
                 // flushing output
                 output.flush();
-
-                // closing streams
                 output.close();
-                input.close();
+                inStream.close();
 
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.e(TAG, e.getMessage());
             }
 
             return null;
@@ -165,11 +204,25 @@ public class MainActivity extends AppCompatActivity {
 
             // Displaying downloaded image into image view
             // Reading image path from sdcard
-            String imagePath = Environment.getExternalStorageDirectory().toString() + "/downloadedfile.jpg";
+            String imagePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "/downloadedfile-1.jpg";
             // setting downloaded into image view
             Log.w(TAG, "ImagePath: " + imagePath );
             my_image.setImageDrawable(Drawable.createFromPath(imagePath));
         }
 
+    }
+
+    private File getDirFromSDCard() {
+        if (Environment.getExternalStorageState().equals(
+                Environment.MEDIA_MOUNTED)) {
+            File sdcard = Environment.getExternalStorageDirectory()
+                    .getAbsoluteFile();
+            File dir = new File(sdcard, "FileDownload" + File.separator + "PASTA_1");
+            if (!dir.exists())
+                dir.mkdirs();
+            return dir;
+        } else {
+            return null;
+        }
     }
 }
