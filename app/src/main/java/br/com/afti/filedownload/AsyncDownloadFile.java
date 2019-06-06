@@ -17,6 +17,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
+import javax.net.ssl.HttpsURLConnection;
+
 public class AsyncDownloadFile  extends AsyncTask <String, String, String> {
     private Context mContext;
 
@@ -32,7 +34,7 @@ public class AsyncDownloadFile  extends AsyncTask <String, String, String> {
     @Override
     public void onPreExecute() {
         mProgress = new ProgressDialog(mContext);
-        mProgress.setMessage("Downloading nPlease wait...");
+        mProgress.setMessage("Baixando por favor espere...");
         mProgress.show();
     }
 
@@ -47,7 +49,7 @@ public class AsyncDownloadFile  extends AsyncTask <String, String, String> {
         try {
 
             String sFolder = Environment.getExternalStorageDirectory().getAbsolutePath() + "/instinctcoder/downloadfiles";
-            String localFilename = sFolder  + "/1.jpg";
+            String localFilename = sFolder  + "/imagem1.jpg";
             File img = new File(localFilename);
             // Create directories, make sure exists
             new File(sFolder ).mkdirs();
@@ -56,7 +58,7 @@ public class AsyncDownloadFile  extends AsyncTask <String, String, String> {
                 URL imageUrl = null;
                 imageUrl = new URL(values[0]);
 
-                URLConnection urlConnection = imageUrl.openConnection();
+                HttpsURLConnection urlConnection = (HttpsURLConnection)imageUrl.openConnection();
                 urlConnection.connect();
                 int file_size = urlConnection.getContentLength()/1000;
 
@@ -67,7 +69,7 @@ public class AsyncDownloadFile  extends AsyncTask <String, String, String> {
                 for (int b; (b = in.read(data)) != -1;) {
                     total += b/1000;
                     out.write(data, 0, b);
-                    publishProgress(Integer.toString(total) + " of " + Integer.toString(file_size) + " KB downloaded.");
+                    publishProgress(Integer.toString(total) + " de " + Integer.toString(file_size) + " KB Baixados.");
                 }
 
                 out.close();

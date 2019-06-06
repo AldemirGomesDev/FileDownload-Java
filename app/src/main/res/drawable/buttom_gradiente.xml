@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:shape="rectangle">
+    <gradient
+        android:startColor="@color/icons_8_muted_grey"
+        android:endColor="@color/colorWhite"
+        android:angle="90"/>
+    <corners android:radius="10dp"/> <!-- valor do arredondamento das bordas -->
+    <!-- cor da borda e tamanho dela -->
+    <padding android:bottom="8dp" android:left="8dp" android:right="8dp" android:top="8dp"/>
+
+</shape>

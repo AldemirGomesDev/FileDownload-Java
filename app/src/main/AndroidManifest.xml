@@ -25,7 +25,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".DownloadActivity" />
-        <activity android:name=".Main2Activity"></activity>
     </application>
 
 </manifest>
