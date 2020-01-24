@@ -1,5 +1,10 @@
 package br.com.afti.filedownload;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,18 +14,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.github.chrisbanes.photoview.PhotoView;
-import com.github.chrisbanes.photoview.PhotoViewAttacher;
 
 import br.com.afti.util.Dialogs;
 
 public class MainActivity extends AppCompatActivity implements TaskCompleted{
 
     private static final String TAG = "FileDownload";
-    private PhotoViewAttacher mAttacher;
     private ImageView imgView;
+    String[] PERMISSIONS = {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +44,27 @@ public class MainActivity extends AppCompatActivity implements TaskCompleted{
 
             }
         });
+        verificarPermissoes();
+    }
+    
+
+    private void verificarPermissoes() {
+        if (!hasPermissions(this, PERMISSIONS)) {
+            Log.d(TAG, "Checando permissões");
+            ActivityCompat.requestPermissions(this, PERMISSIONS, 1);
+        } else {
+        }
+    }
+
+    public static boolean hasPermissions(Context context, String... permissions) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override
@@ -61,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements TaskCompleted{
             });
 
             //mAttacher.update();
-            Dialogs.dialogWarning(this, "Imagem baixada com sucesso!");
+            //Dialogs.dialogWarning(this, "Imagem baixada com sucesso!");
         }else{
             Dialogs.dialogError(this, "Falha ao baixar imagem!");
         }
